@@ -34,7 +34,7 @@ public class RequestUserData
         {
             Console.Write(message);
             input = Console.ReadLine();
-            if (!IsDigitsOnly(input))
+            if (isOnlyNumbers && !IsDigitsOnly(input))
             {
                 Console.WriteLine("Ввод должен содержать только цифры. Попробуйте еще раз.");
                 input = null;
