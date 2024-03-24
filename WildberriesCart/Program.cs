@@ -21,7 +21,7 @@ internal class Program
         string nomenclature;
         do
         {
-            nomenclature = RequestUserData.RequestInput("Введите номер номенклатуры: ");
+            nomenclature = RequestUserData.RequestInput("Введите номер номенклатуры: ", true);
             await SendRequestAsync(requestNewData, nomenclature);
         } while (RequestUserData.RequestInput(
                      "Хотите повторить запрос с новым номером номенклатуры? (1 - Да / 2 - Нет): ") != "2");
@@ -30,6 +30,11 @@ internal class Program
     private static async Task SendRequestAsync(WbUserData? wbUserData, string nomenclature)
     {
         var chrt_id = await GetDetails(wbUserData, nomenclature);
+        if (chrt_id == 0)
+        {
+            Print.PrintToConsole("Не удалось получить информацию о товаре. Возможно неверный номер номенклатуры.");
+            return;
+        }
 
         var clientTs = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var item = new WbAddToCartRequestDto
@@ -53,15 +58,12 @@ internal class Program
 
         if (response.IsSuccessStatusCode)
         {
-            Console.WriteLine($"\nUrl: {response.RequestMessage.RequestUri}\n\n");
-            Console.WriteLine("---------------------------------");
-            Console.WriteLine("Товар успешно добавлен в корзину.");
-            Console.WriteLine("---------------------------------");
+            Print.PrintToConsole($"Url: {response.RequestMessage.RequestUri}");
+            Print.PrintToConsole($"Url: Товар успешно добавлен в корзину.");
         }
         else
         {
-            Console.WriteLine("---------------------------------");
-            Console.WriteLine($"Ошибка добавление товара. Статус код: {response.StatusCode}\n");
+            Print.PrintToConsole($"Ошибка добавление товара. Статус код: {response.StatusCode}");
         }
     }
 
@@ -76,14 +78,16 @@ internal class Program
 
             string responseString = await client.GetStringAsync(url);
             var details = JsonConvert.DeserializeObject<WbProductDetailModel>(responseString);
-            var optionId = details!.data.products.Select(d => d.sizes[0]).FirstOrDefault()!.optionId;
+
+            long optionId = 0;
+
+            if (details != null && details.data.products.Any())
+                optionId = details.data.products.Select(d => d.sizes[0]).FirstOrDefault()!.optionId;
 
             return optionId;
         }
         catch (Exception e)
         {
-            Console.WriteLine("Произошла ошибка при получении информции о товаре:");
-            Console.WriteLine(e.Message);
             throw new Exception("Произошла ошибка при получении информции о товаре: " + e.Message);
         }
     }

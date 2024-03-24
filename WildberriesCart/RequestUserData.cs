@@ -27,16 +27,32 @@ public class RequestUserData
         return data;
     }
 
-    public static string RequestInput(string message)
+    public static string RequestInput(string message, bool isOnlyNumbers = false)
     {
         string? input;
         do
         {
             Console.Write(message);
             input = Console.ReadLine();
+            if (!IsDigitsOnly(input))
+            {
+                Console.WriteLine("Ввод должен содержать только цифры. Попробуйте еще раз.");
+                input = null;
+            }
         } while (string.IsNullOrEmpty(input));
 
         return input;
+    }
+
+    private static bool IsDigitsOnly(string str)
+    {
+        foreach (char c in str)
+        {
+            if (c < '0' || c > '9')
+                return false;
+        }
+
+        return true;
     }
 
     private static async Task SaveDataAsync(string filePath, WbUserData? data)
